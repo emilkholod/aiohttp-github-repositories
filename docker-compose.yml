@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        - ENV=dev
+    ports:
+      - "8000:8000"
+    # command: uvicorn main:create_app --host 0.0.0.0 --reload --factory
+    volumes:
+      - ./src:/app/src/
+      - ./tests:/app/tests/

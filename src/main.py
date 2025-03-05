@@ -1,27 +1,10 @@
-from dataclasses import dataclass
 from typing import Any, Final
 
 from aiohttp import ClientSession
 
+from dto import Repository
+
 GITHUB_API_BASE_URL: Final[str] = "https://api.github.com"
-
-
-@dataclass
-class RepositoryAuthorCommitsNum:
-    author: str
-    commits_num: int
-
-
-@dataclass
-class Repository:
-    name: str
-    owner: str
-    position: int
-    stars: int
-    watchers: int
-    forks: int
-    language: str
-    authors_commits_num_today: list[RepositoryAuthorCommitsNum]
 
 
 class GithubReposScrapper:
