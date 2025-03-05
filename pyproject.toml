@@ -17,6 +17,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 package-mode = false
 
+[tool.poetry.group.dev.dependencies]
+pytest-aiohttp = "^1.1.0"
+
 [tool.isort]
 profile = "black"
 filter_files = true
@@ -34,3 +37,6 @@ exclude = [
     "__pycache__",
 ]
 inline-quotes = '"'
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
