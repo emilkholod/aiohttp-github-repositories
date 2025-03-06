@@ -35,7 +35,7 @@ WORKDIR "${WORKDIR}"
 
 COPY --chown=1000:1000 --from=builder "${WORKDIR}" .
 
-COPY ./src/ ./src
+COPY --chown=1000:1000 ./src/ ./src
 
 ENV PYTHONPATH="/app/src"
 ENV PATH="/app/.venv/bin:$PATH"
