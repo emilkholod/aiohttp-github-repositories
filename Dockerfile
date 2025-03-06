@@ -39,6 +39,3 @@ COPY --chown=1000:1000 ./src/ ./src
 
 ENV PYTHONPATH="/app/src"
 ENV PATH="/app/.venv/bin:$PATH"
-
-# EXPOSE 8000
-# CMD ["uvicorn", "main:create_app", "--host", "0.0.0.0", "--factory"]
