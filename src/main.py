@@ -1,10 +1,13 @@
 import asyncio
 from collections import Counter
 from datetime import datetime, timedelta
-from typing import Any, Final
+from types import TracebackType
+from typing import Any, Final, Optional, Self, Type
 
 from aiohttp import ClientSession
+from aiolimiter import AsyncLimiter
 
+import config
 from dto import Repository, RepositoryAuthorCommitsNum
 from serializers import RepositorySerialzer
 
@@ -12,6 +15,9 @@ GITHUB_API_BASE_URL: Final[str] = "https://api.github.com"
 
 
 class GithubReposScrapper:
+    semaphore = asyncio.Semaphore(config.MCR)
+    limiter = AsyncLimiter(config.RPS)
+
     def __init__(self, access_token: str):
         self._session = ClientSession(
             headers={
@@ -54,10 +60,12 @@ class GithubReposScrapper:
         GitHub REST API:
         https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#list-commits
         """
-        return await self._make_request(
-            endpoint=f"repos/{owner}/{repo}/commits",
-            params=params,
-        )
+        async with self.semaphore, self.limiter:
+            # TODO: Iterate over all commits (use link header)
+            return await self._make_request(
+                endpoint=f"repos/{owner}/{repo}/commits",
+                params=params,
+            )
 
     async def get_repositories(self) -> list[Repository]:
         repositories = [
@@ -81,3 +89,14 @@ class GithubReposScrapper:
 
     async def close(self):
         await self._session.close()
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        await self.close()
