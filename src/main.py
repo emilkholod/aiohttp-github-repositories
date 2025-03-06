@@ -1,8 +1,12 @@
+import asyncio
+from collections import Counter
+from datetime import datetime, timedelta
 from typing import Any, Final
 
 from aiohttp import ClientSession
 
-from dto import Repository
+from dto import Repository, RepositoryAuthorCommitsNum
+from serializers import RepositorySerialzer
 
 GITHUB_API_BASE_URL: Final[str] = "https://api.github.com"
 
@@ -41,15 +45,39 @@ class GithubReposScrapper:
         return data["items"]
 
     async def _get_repository_commits(
-        self, owner: str, repo: str
+        self,
+        owner: str,
+        repo: str,
+        params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """
         GitHub REST API:
         https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#list-commits
         """
-        ...
+        return await self._make_request(
+            endpoint=f"repos/{owner}/{repo}/commits",
+            params=params,
+        )
 
-    async def get_repositories(self) -> list[Repository]: ...
+    async def get_repositories(self) -> list[Repository]:
+        repositories = [
+            RepositorySerialzer(r).dto for r in await self._get_top_repositories()
+        ]
+        params = {"since": (datetime.now() - timedelta(days=1)).isoformat()}
+        tasks = [
+            self._get_repository_commits(r.owner, r.name, params=params)
+            for r in repositories
+        ]
+        results = await asyncio.gather(*tasks)
+        for repo, author_commits_num in zip(repositories, results):
+            commits_per_author = Counter(
+                c["commit"]["author"]["name"] for c in author_commits_num
+            )
+            repo.authors_commits_num_today = [
+                RepositoryAuthorCommitsNum(author=author, commits_num=commits_num)
+                for author, commits_num in commits_per_author.items()
+            ]
+        return repositories
 
     async def close(self):
         await self._session.close()
