@@ -1,5 +1,7 @@
 services:
   app:
+    depends_on:
+      - clickhouse
     build:
       context: .
       args:
@@ -9,3 +11,21 @@ services:
     volumes:
       - ./src:/app/src/
       - ./tests:/app/tests/
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.2-alpine
+    environment:
+      - CLICKHOUSE_DB=test
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=default
+    ports:
+      # HTTP port
+      - "8123:8123"
+      # Native TCP port
+      - "9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./clickhouse/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+
+volumes:
+  clickhouse-data:
