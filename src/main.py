@@ -67,16 +67,18 @@ class GithubReposScrapper:
                 params=params,
             )
 
-    async def get_repositories(self) -> list[Repository]:
+    async def get_repositories(self, limit: int = 100) -> list[Repository]:
         repositories = [
-            RepositorySerialzer(r).dto for r in await self._get_top_repositories()
+            RepositorySerialzer(r).dto for r in await self._get_top_repositories(limit)
         ]
+
         params = {"since": (datetime.now() - timedelta(days=1)).isoformat()}
         tasks = [
             self._get_repository_commits(r.owner, r.name, params=params)
             for r in repositories
         ]
         results = await asyncio.gather(*tasks)
+
         for repo, author_commits_num in zip(repositories, results):
             commits_per_author = Counter(
                 c["commit"]["author"]["name"] for c in author_commits_num
@@ -85,6 +87,7 @@ class GithubReposScrapper:
                 RepositoryAuthorCommitsNum(author=author, commits_num=commits_num)
                 for author, commits_num in commits_per_author.items()
             ]
+
         return repositories
 
     async def close(self):
