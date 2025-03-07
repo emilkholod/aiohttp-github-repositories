@@ -59,3 +59,4 @@ repos:
     rev: 'v1.15.0'
     hooks:
       - id: mypy
+        additional_dependencies: [aiohttp~=3.11.11, aiolimiter~=1.2.1, environs~=14.1.1, aiochclient~=2.6.0]
